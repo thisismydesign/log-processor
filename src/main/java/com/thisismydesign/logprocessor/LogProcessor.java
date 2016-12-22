@@ -5,6 +5,7 @@ import com.thisismydesign.stringprocessor.StringProcessor;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +53,18 @@ public class LogProcessor {
     }
 
     private boolean isAfter(String timestamp, LocalDateTime after, DateTimeFormatter formatter) {
-        LocalDateTime lineTimeStamp = LocalDateTime.parse(timestamp, formatter);
+        LocalDateTime lineTimeStamp;
+        try {
+            lineTimeStamp = LocalDateTime.parse(timestamp, formatter);
+        } catch (DateTimeParseException e) {
+            if (e.getMessage().contains("Unable to obtain LocalDateTime from TemporalAccessor")) {
+                throw new IllegalArgumentException("LocalDateTime object could not be parsed, possibly not all date " +
+                        "and time fields are present. Try using 'timestampPrefix' to add missing fields. Original " +
+                        "error: " + e.getMessage());
+            } else {
+                throw e;
+            }
+        }
         return lineTimeStamp.isAfter(after) || lineTimeStamp.equals(after);
     }
 }
